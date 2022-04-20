@@ -299,9 +299,11 @@ if __name__ == "__main__":
     uuid = asyncio.run(api_manager.request_mac_addr())
     asyncio.run(api_manager.update_record({'uuid': uuid}))
     asyncio.run(api_manager.delete_assigned_sign())
-    uuid_msg = 'mac,' + uuid
-    asyncio.run(api_manager.log (uuid))
+    uuid_msg = 'Result' + ',' + 'mac'  + ',' + api_manager.mac_addr
+    uuid_msg = uuid_msg + ',' + 'uuid' + ',' + api_manager.uuid_mac
+    api_manager.log('=' * 80)
     api_manager.log(uuid_msg)
+    api_manager.log('=' * 80)
     
     # await api_manager.update_record({'uuid': uuid})
     
