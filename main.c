@@ -22,35 +22,8 @@
 #include <getopt.h>
 
 #include "typedefs.h"
+#include "mac_server_ctl.h"
 //------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
-const char *OPT_NLP_ADDR = "192.168.0.0";
-const char *OPT_MSG_STR = NULL;
-static uchar_t OPT_CHANNEL = 0;
-static bool OPT_NLP_FIND = false;
-static bool OPT_MSG_ERR = false;
-
-static uchar_t NlpIPAddr[20];
-static uchar_t NlpMsg[64];
-
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
-static void print_usage(const char *prog)
-{
-	printf("Usage: %s [-factm]\n", prog);
-	puts("  -f --find_nlp  find network printer.\n"
-	     "  -a --nlp_addr  Network printer ip address.(default = 192.168.0.0)\n"
-	     "  -c --channel   Message channel (left or right, default = left)\n"
-	     "  -t --msg_type  message type (mac or error, default = mac)\n"
-	     "  -m --msg       print message.\n"
-		 "                 type == mac, msg is 001e06??????\n"
-	     "                 type == error, msg is usb,???,...\n"
-		 "   e.g) nlp_test -a 192.168.20.10 -c left -t error -m usb,sata,hdd\n"
-		 "        nlp_test -f -c right -t mac -m 001e06234567\n"
-	);
-	exit(1);
-}
-
 //------------------------------------------------------------------------------
 static void tolowerstr (char *p)
 {
@@ -70,47 +43,57 @@ static void toupperstr (char *p)
 }
 
 //------------------------------------------------------------------------------
+static void print_usage(const char *prog)
+{
+	printf("Usage: %s [-bre]\n", prog);
+	puts("  -b --board_name     request board name.\n"
+	     "  -r --request        request from server. (mac or uuid)\n"
+	     "  -e --erase          request erase mac.\n"
+		 "  e.g) request mac \n"
+		 "       mac_server_test -b n2l -r mac\n"
+		 "  e.g) request uuid \n"
+		 "       mac_server_test -b n2l -r uuid\n"
+		 "  e.g) request erase mac \n"
+		 "       mac_server_test -b n2l -e 001e06123456\n"
+	);
+	exit(1);
+}
+
+//------------------------------------------------------------------------------
+static char *OPT_REQUEST_BOARD = "None";
+static char *OPT_ERASE_MAC = "000000000000";
+static bool OPT_REQUEST_MAC = false;
+
 static void parse_opts (int argc, char *argv[])
 {
 	while (1) {
 		static const struct option lopts[] = {
-			{ "find_nlp",  	0, 0, 'f' },
-			{ "nlp_addr",	1, 0, 'a' },
-			{ "channle",	1, 0, 'c' },
-			{ "msg_type",	1, 0, 't' },
-			{ "msg_str",	1, 0, 'm' },
+			{ "board_name", 1, 0, 'b' },
+			{ "request",	1, 0, 'r' },
+			{ "erase",		1, 0, 'e' },
 			{ NULL, 0, 0, 0 },
 		};
 		int c;
 
-		c = getopt_long(argc, argv, "fa:c:t:m:", lopts, NULL);
+		c = getopt_long(argc, argv, "b:r:e:", lopts, NULL);
 
 		if (c == -1)
 			break;
 
 		switch (c) {
-		case 'f':
-			OPT_NLP_FIND = true;
-			break;
-		case 'a':
-			OPT_NLP_ADDR = optarg;
-			break;
-		case 'c':
+		case 'b':
 			tolowerstr (optarg);
-            if (!strncmp("right", optarg, strlen("right")))
-				OPT_CHANNEL = 1;
-			else
-				OPT_CHANNEL = 0;
+			OPT_REQUEST_BOARD = optarg;
 			break;
-		case 't':
+		case 'r':
 			tolowerstr (optarg);
-			if (!strncmp("error", optarg, strlen("error")))
-				OPT_MSG_ERR = true;
+            if (!strncmp("mac", optarg, strlen("mac")))
+				OPT_REQUEST_MAC = true;
 			else
-				OPT_MSG_ERR = false;
+				OPT_REQUEST_MAC = false;
 			break;
-		case 'm':
-			OPT_MSG_STR = optarg;
+		case 'e':
+			OPT_ERASE_MAC = optarg;
 			break;
 		default:
 			print_usage(argv[0]);
@@ -120,31 +103,10 @@ static void parse_opts (int argc, char *argv[])
 }
 
 //------------------------------------------------------------------------------
-int test_py_run (void)
-{
-	FILE *fp;
-	byte_t rbuff[4096];
-
-	if (NULL == (fp = popen("python3 mac_server_ctl.py", "r")))
-	{
-		err("popen() error!\n");
-		return 0;
-	}
-
-	memset(rbuff, 0, sizeof(rbuff));
-	while (fgets(rbuff, 4096, fp)) {
-		printf("Capture Line : %s %ld\n", rbuff, strlen(rbuff));
-	}
-	pclose(fp);
-	return 0;
-}
-
-//------------------------------------------------------------------------------
 int main(int argc, char **argv)
 {
-	test_py_run();
     parse_opts(argc, argv);
-
+	mac_server_test();
 	return 0;
 }
 
