@@ -25,11 +25,11 @@ class API_MANAGER:
         self.msg_en = 0
 
     def info_print(self):
-        self.log(f'================================')
-        self.log(f'API version: {self.version}')
-        self.log(f'Server URL for test: {self.server_host}')
-        self.log(f'Given board: {self.board}')
-        self.log(f'================================')
+        print('=' * 50)
+        print(f'API version: {self.version}')
+        print(f'Server URL for test: {self.server_host}')
+        print(f'Given board: {self.board}')
+        print('=' * 50)
 
     async def _login_to_api_server(self):
         try:
