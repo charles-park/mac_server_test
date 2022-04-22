@@ -90,7 +90,7 @@ static void parse_opts (int argc, char *argv[])
             if (!strncmp("mac", optarg, strlen("mac")))
 				OPT_REQUEST_MAC = true;
 			else
-				OPT_REQUEST_MAC = false;
+				OPT_REQUEST_MAC = false;	// read uuid
 			break;
 		case 'e':
 			OPT_ERASE_MAC = optarg;
@@ -106,7 +106,39 @@ static void parse_opts (int argc, char *argv[])
 int main(int argc, char **argv)
 {
     parse_opts(argc, argv);
-	mac_server_test();
+
+	if (!strncmp(OPT_REQUEST_BOARD, "None", strlen("None"))) {
+		err ("Request Board name is None.\n");
+		return 0;
+	}
+	if (strstr(OPT_ERASE_MAC, "001e06") != NULL) {
+		info ("board name = %s, erase mac = %s, ret = %d\n",
+			OPT_REQUEST_BOARD,
+			OPT_ERASE_MAC,
+			set_erase_mac (OPT_REQUEST_BOARD, OPT_ERASE_MAC));
+	} else {
+		byte_t rdata[TYPE_UUID_SIZE +1];
+		int ret;
+
+		memset(rdata, 0, sizeof(rdata));
+		ret = get_mac_uuid (OPT_REQUEST_BOARD,
+							OPT_REQUEST_MAC ? TYPE_MAC : TYPE_UUID,
+							rdata,
+							OPT_REQUEST_MAC ? TYPE_MAC_SIZE : TYPE_UUID_SIZE);
+		if (strstr(rdata, "001e06") != NULL)
+			info ("board name = %s, request %s = %s, ret = %d\n",
+				OPT_REQUEST_BOARD,
+				OPT_REQUEST_MAC ? "mac" : "uuid",
+				rdata,
+				ret);
+		else
+			err ("board name = %s, request %s = %s, ret = %d\n",
+				OPT_REQUEST_BOARD,
+				OPT_REQUEST_MAC ? "mac" : "uuid",
+				"Request data error",
+				ret);
+	}
+//	mac_server_test();
 	return 0;
 }
 
